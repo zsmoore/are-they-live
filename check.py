@@ -1,6 +1,7 @@
 import requests
 import time
 import os
+import subprocess
 from datetime import datetime
 
 def load_env_file(filepath='.env'):
@@ -46,25 +47,28 @@ STREAMER_NAMES = [name.strip() for name in STREAMER_NAMES if name.strip()]
 # Check interval in seconds
 CHECK_INTERVAL = int(env_vars.get("CHECK_INTERVAL") or os.environ.get("CHECK_INTERVAL", "60"))
 
-# ANSI color codes
+# Color functions using tput
+def tput(command):
+    """Execute tput command and return the result"""
+    try:
+        result = subprocess.check_output(['tput'] + command.split())
+        return result.decode('utf-8')
+    except:
+        return ''
+
+# Initialize colors using tput
 class Colors:
-    RESET = '\033[0m'
-    BOLD = '\033[1m'
+    RESET = tput('sgr0')
+    BOLD = tput('bold')
     
-    # Colors
-    RED = '\033[91m'
-    GREEN = '\033[92m'
-    YELLOW = '\033[93m'
-    BLUE = '\033[94m'
-    MAGENTA = '\033[95m'
-    CYAN = '\033[96m'
-    WHITE = '\033[97m'
-    GRAY = '\033[90m'
-    
-    # Background colors
-    BG_RED = '\033[101m'
-    BG_GREEN = '\033[102m'
-    BG_BLACK = '\033[40m'
+    # Colors using setaf (set ANSI foreground)
+    RED = tput('setaf 1')
+    GREEN = tput('setaf 2')
+    YELLOW = tput('setaf 3')
+    BLUE = tput('setaf 4')
+    MAGENTA = tput('setaf 5')
+    CYAN = tput('setaf 6')
+    WHITE = tput('setaf 7')
 
 def clear_screen():
     """Clear the terminal screen"""
@@ -145,9 +149,9 @@ def display_status(statuses, last_update, seconds_remaining):
     clear_screen()
     
     # Header
-    print("{0}{1}╔{2}╗{3}".format(Colors.BOLD, Colors.CYAN, '═' * 78, Colors.RESET))
-    print("{0}{1}║{2}{3:^78}{4}║{5}".format(Colors.BOLD, Colors.CYAN, Colors.WHITE, 'TWITCH STREAM MONITOR', Colors.CYAN, Colors.RESET))
-    print("{0}{1}╚{2}╝{3}".format(Colors.BOLD, Colors.CYAN, '═' * 78, Colors.RESET))
+    print("{0}{1}={'=' * 78}{2}".format(Colors.BOLD, Colors.CYAN, Colors.RESET))
+    print("{0}{1}{2:^78}{3}".format(Colors.BOLD, Colors.CYAN, 'TWITCH STREAM MONITOR', Colors.RESET))
+    print("{0}{1}={'=' * 78}{2}".format(Colors.BOLD, Colors.CYAN, Colors.RESET))
     print()
     
     # Sort streamers: live ones first, then offline
@@ -159,42 +163,42 @@ def display_status(statuses, last_update, seconds_remaining):
     total_count = len(statuses)
     print("{0}  Status: {1}{2} LIVE{3}{0} / {4}{5} OFFLINE{3}{0} / {6} Total{3}".format(
         Colors.BOLD, Colors.GREEN, live_count, Colors.RESET, Colors.RED, total_count - live_count, total_count))
-    print("{0}  Last Update: {1}{2}".format(Colors.GRAY, last_update, Colors.RESET))
+    print("  Last Update: {0}".format(last_update))
     print()
     
     # Display live streamers
     if live_streamers:
-        print("{0}{1}  ● LIVE STREAMS{2}".format(Colors.BOLD, Colors.GREEN, Colors.RESET))
-        print("{0}  {1}{2}".format(Colors.GREEN, '─' * 76, Colors.RESET))
+        print("{0}{1}  * LIVE STREAMS{2}".format(Colors.BOLD, Colors.GREEN, Colors.RESET))
+        print("{0}  {1}{2}".format(Colors.GREEN, '-' * 76, Colors.RESET))
         for name, status in live_streamers:
             viewers = format_viewer_count(status["viewer_count"])
             title = status["title"][:55] + "..." if len(status["title"]) > 55 else status["title"]
             game = status["game"][:20] + "..." if len(status["game"]) > 20 else status["game"]
             
-            print("{0}{1}  ┌─ {2}{3}".format(Colors.BOLD, Colors.GREEN, name.upper(), Colors.RESET))
-            print("{0}  │{1}  {2}Title:{1} {3}".format(Colors.GREEN, Colors.RESET, Colors.BOLD, title))
-            print("{0}  │{1}  {2}Game:{1} {3}{4}{1}".format(Colors.GREEN, Colors.RESET, Colors.BOLD, Colors.CYAN, game))
-            print("{0}  │{1}  {2}Viewers:{1} {3}{4}{1}".format(Colors.GREEN, Colors.RESET, Colors.BOLD, Colors.YELLOW, viewers))
-            print("{0}  └{1}{2}".format(Colors.GREEN, '─' * 74, Colors.RESET))
+            print("{0}{1}  +-- {2}{3}".format(Colors.BOLD, Colors.GREEN, name.upper(), Colors.RESET))
+            print("{0}  |{1}   {2}Title:{1} {3}".format(Colors.GREEN, Colors.RESET, Colors.BOLD, title))
+            print("{0}  |{1}   {2}Game:{1} {3}{4}{1}".format(Colors.GREEN, Colors.RESET, Colors.BOLD, Colors.CYAN, game))
+            print("{0}  |{1}   {2}Viewers:{1} {3}{4}{1}".format(Colors.GREEN, Colors.RESET, Colors.BOLD, Colors.YELLOW, viewers))
+            print("{0}  {1}{2}".format(Colors.GREEN, '-' * 76, Colors.RESET))
             print()
     
     # Display offline streamers
     if offline_streamers:
-        print("{0}{1}  ○ OFFLINE{2}".format(Colors.BOLD, Colors.RED, Colors.RESET))
-        print("{0}  {1}{2}".format(Colors.RED, '─' * 76, Colors.RESET))
+        print("{0}{1}  o OFFLINE{2}".format(Colors.BOLD, Colors.RED, Colors.RESET))
+        print("{0}  {1}{2}".format(Colors.RED, '-' * 76, Colors.RESET))
         
         # Display offline streamers in columns
         cols = 3
         for i in range(0, len(offline_streamers), cols):
             row = offline_streamers[i:i+cols]
-            formatted_names = ["{0}  • {1:<22}{2}".format(Colors.RED, name, Colors.RESET) for name, _ in row]
+            formatted_names = ["{0}  - {1:<22}{2}".format(Colors.RED, name, Colors.RESET) for name, _ in row]
             print("".join(formatted_names))
         print()
     
     # Footer with countdown
-    print("{0}  {1}{2}".format(Colors.GRAY, '─' * 76, Colors.RESET))
-    print("{0}  Next check in {1}{2}{0} seconds... (Press Ctrl+C to exit){3}".format(
-        Colors.GRAY, Colors.YELLOW, seconds_remaining, Colors.RESET), end='\r')
+    print("  {0}".format('-' * 76))
+    print("  Next check in {0}{1}{2} seconds... (Press Ctrl+C to exit){2}".format(
+        Colors.YELLOW, seconds_remaining, Colors.RESET), end='\r')
 
 def main():
     try:
@@ -203,11 +207,11 @@ def main():
         # Initial screen
         clear_screen()
         print("{0}{1}Initializing Twitch Stream Monitor...{2}".format(Colors.BOLD, Colors.CYAN, Colors.RESET))
-        print("{0}Monitoring {1} streamers{2}".format(Colors.GRAY, len(STREAMER_NAMES), Colors.RESET))
+        print("Monitoring {0} streamers".format(len(STREAMER_NAMES)))
         
         # Get OAuth token
         access_token = get_oauth_token()
-        print("{0}✓ Successfully authenticated with Twitch API{1}".format(Colors.GREEN, Colors.RESET))
+        print("{0}Successfully authenticated with Twitch API{1}".format(Colors.GREEN, Colors.RESET))
         time.sleep(2)
         
         while True:
