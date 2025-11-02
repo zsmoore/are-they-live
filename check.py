@@ -149,9 +149,9 @@ def display_status(statuses, last_update, seconds_remaining):
     clear_screen()
     
     # Header
-    print("{0}{1}={'=' * 78}{2}".format(Colors.BOLD, Colors.CYAN, Colors.RESET))
+    print("{0}{1}{2}{3}".format(Colors.BOLD, Colors.CYAN, '=' * 78, Colors.RESET))
     print("{0}{1}{2:^78}{3}".format(Colors.BOLD, Colors.CYAN, 'TWITCH STREAM MONITOR', Colors.RESET))
-    print("{0}{1}={'=' * 78}{2}".format(Colors.BOLD, Colors.CYAN, Colors.RESET))
+    print("{0}{1}{2}{3}".format(Colors.BOLD, Colors.CYAN, '=' * 78, Colors.RESET))
     print()
     
     # Sort streamers: live ones first, then offline
