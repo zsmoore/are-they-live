@@ -1,1 +1,3 @@
-printf "\033[91mRED\033[0m\n"
+tput setaf 1
+echo "This should be red"
+tput sgr0
